@@ -15,6 +15,7 @@ class ComponentContainer:
         self._entry: Dict[str, Entry] = {}
         self._radiobutton: Dict[str, Radiobutton] = {}
         self._int_var: Dict[str, IntVar] = {}
+        self._photo_image: Dict[str, PhotoImage] = {}
 
     @property
     def frame(self) -> Dict[str, Frame]:
@@ -96,6 +97,14 @@ class ComponentContainer:
     def radiobutton(self, value: Dict[str, Radiobutton]):
         self._radiobutton = value
 
+    @property
+    def photo_image(self) -> Dict[str, PhotoImage]:
+        return self._photo_image
+
+    @photo_image.setter
+    def photo_image(self, value: Dict[str, PhotoImage]):
+        self._photo_image = value
+
     def get_frame(self, name: str) -> Frame:
         return self._frame.get(name)
 
@@ -125,6 +134,9 @@ class ComponentContainer:
 
     def get_combobox(self, name: str) -> Combobox:
         return self._combobox.get(name)
+
+    def get_photo_image(self, name: str) -> PhotoImage:
+        return self._photo_image.get(name)
 
     def set_string_var_value(self, name: str, value: str):
         self._string_var.get(name).set(value)
@@ -161,3 +173,6 @@ class ComponentContainer:
 
     def add_radiobutton(self, name: str, widget: Radiobutton):
         self._radiobutton.update({name: widget})
+
+    def add_photo_image(self, name: str, widget: PhotoImage):
+        self._photo_image.update({name: widget})
