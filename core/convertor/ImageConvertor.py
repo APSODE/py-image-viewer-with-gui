@@ -2,7 +2,7 @@ from typing import Dict, TYPE_CHECKING
 from core.convertor.PixelConvertor import PixelConvertor
 from core.type_annotation.CustomTypes import CHANNEL_TYPE_LITERAL, CONVERT_TYPE, CHANNEL_NAME_LITERAL
 from PIL.Image import new as new_image
-from PIL.Image import Image
+from PIL.Image import Image, fromarray
 import numpy as np
 
 if TYPE_CHECKING:
@@ -60,6 +60,20 @@ class ImageConvertor:
         )
 
         return converted_image
+
+        # return fromarray(
+        #     np.array(
+        #         [
+        #             PixelConvertor.calc_full_pixel_data(
+        #                 original_pixel_data = target_data[y_pos, x_pos],
+        #                 channel_type = convert_type
+        #             )
+        #             for y_pos in range(target_image.original_image.height)
+        #             for x_pos in range(target_image.original_image.width)
+        #         ]
+        #     ),
+        #     convert_type
+        # )
 
     @staticmethod
     def _get_channel_name(channel_type: CHANNEL_TYPE_LITERAL) -> CHANNEL_NAME_LITERAL:
