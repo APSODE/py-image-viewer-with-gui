@@ -3,20 +3,21 @@ from PIL.Image import Image
 from PIL.Image import open as img_open
 
 from core.convertor.ImageConvertor import ImageConvertor
+from core.custom_decorator.RuntimeCounter import RuntimeCounter
 
 
 class ImageWrapper(Image):
-    def __init__(self, image_dir: str, with_base_convertor: bool):
+    def __init__(self, image_dir: str, with_base_convertor: bool, with_optimized_convertor: bool):
         self._original_image = img_open(image_dir)
         self._resize_image()
         self._rgb_image: Optional[Image] = None
         self._yuv_image: Optional[Image] = None
         self._gray_image: Optional[Image] = None
-        self._set_all_channel_image(with_base_convertor)
+        self._set_all_channel_image(with_base_convertor, with_optimized_convertor)
 
     @staticmethod
-    def create_object(image_dir: str, with_base_convertor: bool) -> "ImageWrapper":
-        return ImageWrapper(image_dir, with_base_convertor)
+    def create_object(image_dir: str, with_base_convertor: bool, with_optimized_convertor) -> "ImageWrapper":
+        return ImageWrapper(image_dir, with_base_convertor, with_optimized_convertor)
 
     def _resize_image(self):
         original_width, original_height = self._original_image.size
@@ -38,11 +39,17 @@ class ImageWrapper(Image):
         if resized_size is not None:
             self._original_image = self._original_image.resize(resized_size)
 
-    def _set_all_channel_image(self, with_base_convertor: bool):
+    @RuntimeCounter("ImageWrapper all channel image convert")
+    def _set_all_channel_image(self, with_base_convertor: bool, with_optimized_convertor: bool):
         if with_base_convertor:
             self._rgb_image = self._original_image.convert("RGB")
             self._yuv_image = self._original_image.convert("YCbCr")
             self._gray_image = self._original_image.convert("L")
+
+        elif with_optimized_convertor:
+            self._rgb_image = self._original_image
+            self._yuv_image = ImageConvertor.optimized_convert(self, "YUV")
+            self._gray_image = ImageConvertor.optimized_convert(self, "GRAY")
 
         else:
             self._rgb_image = self._original_image
