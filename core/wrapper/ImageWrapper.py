@@ -41,6 +41,10 @@ class ImageWrapper(Image):
 
     @RuntimeCounter("ImageWrapper all channel image convert")
     def _set_all_channel_image(self, with_base_convertor: bool, with_optimized_convertor: bool):
+        # 해당 메소드의 각 convert메소드는 기본 내장 convert메소드를 제외하면 변환 타입별 약 10초 가량 소요됨
+        # 해당 메소드의 실행 시간을 줄이려면, 멀티스레딩을 사용하는 것이 최선으로 보여짐
+        # 해당 메소드에서 사용되는 convert메소드들은 해당 객체가 필수적으로 필요로하는 Image객체를 생성하므로
+        # 비동기 방식으로는 블로킹을 막을수 없는 것으로 예상됨
         if with_base_convertor:
             self._rgb_image = self._original_image.convert("RGB")
             self._yuv_image = self._original_image.convert("YCbCr")
