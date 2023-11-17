@@ -57,7 +57,7 @@ class ImageManager:
             )
 
     @RuntimeCounter("Optimized Image Split")
-    def image_split_by_channel_optimized(self, channel_type: CHANNEL_TYPE_LITERAL):
+    def optimized_image_split_by_channel(self, channel_type: CHANNEL_TYPE_LITERAL):
         target_image: Image = getattr(self._image_wrapper, f"{channel_type.lower()}_image")
         channel_images: List[Image]
         channel_images = [new_image("L", target_image.size) for _ in range(self.get_channel_amount(channel_type))]
