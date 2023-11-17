@@ -2,7 +2,7 @@ from typing import Dict, List, Tuple
 from core.custom_decorator.RuntimeCounter import RuntimeCounter
 from core.type_annotation.CustomTypes import CHANNEL_TYPE_LITERAL, CHANNEL_LITERAL, ROTATE_TYPE, PIXEL_TYPE
 from core.wrapper.ImageWrapper import ImageWrapper
-from PIL.Image import Image
+from PIL.Image import Image, fromarray
 from PIL.Image import new as new_image
 
 import os.path
@@ -117,6 +117,19 @@ class ImageManager:
         )
 
         return rotated_image
+
+    @RuntimeCounter("Center Position 50% Crop Image")
+    def crop_image(self):
+        target_data = np.array(self._loaded_image)
+        width, height = self._loaded_image.size
+        crop_size = int(min(width, height) * 0.25)
+
+        crroped_image_array = target_data[
+            height // 2 - crop_size: height // 2 + crop_size,
+            width // 2 - crop_size: width // 2 + crop_size
+        ]
+
+        self.save_image(f"center_position_50%_crop_image.jpg", fromarray(crroped_image_array))
 
     def get_channel_amount(self, channel_type: CHANNEL_TYPE_LITERAL) -> int:
         return self._channel_amount_data.get(channel_type)
