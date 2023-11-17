@@ -3,6 +3,7 @@ from core.convertor.PixelConvertor import PixelConvertor
 from core.type_annotation.CustomTypes import CHANNEL_TYPE_LITERAL, CONVERT_TYPE, CHANNEL_NAME_LITERAL
 from PIL.Image import new as new_image
 from PIL.Image import Image
+import numpy as np
 
 if TYPE_CHECKING:
     from core.wrapper.ImageWrapper import ImageWrapper
@@ -36,6 +37,27 @@ class ImageConvertor:
                         channel_type = convert_type
                     )
                 )
+
+        return converted_image
+
+    @staticmethod
+    def optimized_convert(target_image: "ImageWrapper", convert_type: CONVERT_TYPE) -> Image:
+        channel_name = ImageConvertor._get_channel_name(convert_type)
+        converted_image = new_image(channel_name, target_image.original_image.size)
+
+        # NumPy array로 변환
+        target_data = np.array(target_image.original_image)
+
+        converted_image.putdata(
+            [
+                PixelConvertor.calc_full_pixel_data(
+                    original_pixel_data = target_data[y_pos, x_pos],
+                    channel_type = convert_type
+                )
+                for y_pos in range(target_image.original_image.height)
+                for x_pos in range(target_image.original_image.width)
+            ]
+        )
 
         return converted_image
 

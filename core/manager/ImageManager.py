@@ -1,17 +1,17 @@
-import os.path
-import time
 from typing import Dict, List, Tuple
-from core.convertor.PixelConvertor import PixelConvertor
 from core.custom_decorator.RuntimeCounter import RuntimeCounter
 from core.type_annotation.CustomTypes import CHANNEL_TYPE_LITERAL, CHANNEL_LITERAL, ROTATE_TYPE, PIXEL_TYPE
 from core.wrapper.ImageWrapper import ImageWrapper
 from PIL.Image import Image
 from PIL.Image import new as new_image
 
+import os.path
+import numpy as np
+
 
 class ImageManager:
-    def __init__(self, image_dir: str, with_base_convertor: bool = False):
-        self._image_wrapper = ImageWrapper.create_object(image_dir, with_base_convertor)
+    def __init__(self, image_dir: str, with_base_convertor: bool = False, with_optimized_convertor: bool = False):
+        self._image_wrapper = ImageWrapper.create_object(image_dir, with_base_convertor, with_optimized_convertor)
         self._loaded_image = self._image_wrapper.original_image
         self._channel_amount_data: Dict[CHANNEL_TYPE_LITERAL, int] = {
             "RGB": 3,
@@ -28,11 +28,12 @@ class ImageManager:
         from Testor import ROOT_PATH
         image.save(os.path.join(ROOT_PATH, "converted_images", file_name))
 
-    @RuntimeCounter()
+    @RuntimeCounter("Non-Optimized Image Split")
     def image_split_by_channel(self, channel_type: CHANNEL_TYPE_LITERAL):
         target_image: Image = getattr(self._image_wrapper, f"{channel_type.lower()}_image")
         channel_images: List[Image]
         channel_images = [new_image("L", target_image.size) for _ in range(self.get_channel_amount(channel_type))]
+        print(f"{channel_type} image split start!")
         print(f"width : {target_image.width}\n"
               f"height : {target_image.height}\n"
               f"total : {target_image.width * target_image.height}"
@@ -55,7 +56,39 @@ class ImageManager:
                 channel_images[channel_idx]
             )
 
-    @RuntimeCounter()
+    @RuntimeCounter("Optimized Image Split")
+    def image_split_by_channel_optimized(self, channel_type: CHANNEL_TYPE_LITERAL):
+        target_image: Image = getattr(self._image_wrapper, f"{channel_type.lower()}_image")
+        channel_images: List[Image]
+        channel_images = [new_image("L", target_image.size) for _ in range(self.get_channel_amount(channel_type))]
+        print(f"{channel_type} image split start!")
+        print(f"width : {target_image.width}\n"
+              f"height : {target_image.height}\n"
+              f"total : {target_image.width * target_image.height}"
+              )
+
+        # NumPy array로 변환
+        target_data = np.array(target_image)
+
+        for channel_idx in range(self.get_channel_amount(channel_type)):
+            channel_images[channel_idx].putdata(
+                [
+                    self._get_split_pixel_data(
+                        target_pixel_data = target_data[y_pos, x_pos],
+                        channel_type = channel_type,
+                        channel_idx = channel_idx
+                    )
+                    for y_pos in range(target_image.height)
+                    for x_pos in range(target_image.width)
+                ]
+            )
+
+            self.save_image(
+                f"{channel_type}_channel_split_image_{channel_idx}_optimized.jpg",
+                channel_images[channel_idx]
+            )
+
+    @RuntimeCounter("Non-Optimzed Image Rotate")
     def rotate_image(self, rotate_type: ROTATE_TYPE):
         rotated_image = new_image("RGB", self._loaded_image.size)
         width, height = self._loaded_image.size
@@ -69,6 +102,21 @@ class ImageManager:
                 )
 
         self.save_image(f"{rotate_type}_rotated_image.jpg", rotated_image)
+
+    @RuntimeCounter("Optimized Image Rotate")
+    def optimized_rotate_image(self, rotate_type: ROTATE_TYPE):
+        rotated_image = new_image("RGB", self._loaded_image.size)
+        width, height = self._loaded_image.size
+
+        rotated_image.putdata(
+            [
+                self._loaded_image.getpixel(self._create_rotate_pos(rotate_type, (x_pos, y_pos)))
+                for y_pos in range(height)
+                for x_pos in range(width)
+            ]
+        )
+
+        return rotated_image
 
     def get_channel_amount(self, channel_type: CHANNEL_TYPE_LITERAL) -> int:
         return self._channel_amount_data.get(channel_type)
