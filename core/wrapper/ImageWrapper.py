@@ -1,7 +1,6 @@
 from typing import Optional, Tuple
 from PIL.Image import Image
 from PIL.Image import open as img_open
-
 from core.convertor.ImageConvertor import ImageConvertor
 from core.custom_decorator.RuntimeCounter import RuntimeCounter
 
