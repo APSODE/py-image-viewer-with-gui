@@ -4,13 +4,14 @@ from core.type_annotation.CustomTypes import CHANNEL_TYPE_LITERAL, CHANNEL_LITER
 from core.wrapper.ImageWrapper import ImageWrapper
 from PIL.Image import Image, fromarray
 from PIL.Image import new as new_image
+from PIL.ImageTk import PhotoImage
 
 import os.path
 import numpy as np
 
 
 class ImageManager:
-    def __init__(self, image_dir: str, with_base_convertor: bool = False, with_optimized_convertor: bool = False):
+    def __init__(self, image_dir: str, with_base_convertor: bool = False, with_optimized_convertor: bool = True):
         self._image_wrapper = ImageWrapper.create_object(image_dir, with_base_convertor, with_optimized_convertor)
         self._loaded_image = self._image_wrapper.original_image
         self._channel_amount_data: Dict[CHANNEL_TYPE_LITERAL, int] = {
@@ -167,3 +168,11 @@ class ImageManager:
 
         else:
             return target_pixel_data
+
+    @staticmethod
+    def convert_to_photoimage(image: Image) -> PhotoImage:
+        return PhotoImage(image)
+
+    @property
+    def loaded_image(self) -> Image:
+        return self._loaded_image
