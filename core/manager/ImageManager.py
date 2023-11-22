@@ -11,7 +11,7 @@ import numpy as np
 
 
 class ImageManager:
-    def __init__(self, image_dir: str, with_base_convertor: bool = False, with_optimized_convertor: bool = True):
+    def __init__(self, image_dir: str, with_base_convertor: bool = True, with_optimized_convertor: bool = False):
         self._image_wrapper = ImageWrapper.create_object(image_dir, with_base_convertor, with_optimized_convertor)
         self._loaded_image = self._image_wrapper.original_image
         self._channel_amount_data: Dict[CHANNEL_TYPE_LITERAL, int] = {
@@ -30,7 +30,7 @@ class ImageManager:
         image.save(os.path.join(ROOT_PATH, "converted_images", file_name))
 
     @RuntimeCounter("Non-Optimized Image Split")
-    def image_split_by_channel(self, channel_type: CHANNEL_TYPE_LITERAL):
+    def image_split_by_channel(self, channel_type: CHANNEL_TYPE_LITERAL) -> List[Image]:
         target_image: Image = getattr(self._image_wrapper, f"{channel_type.lower()}_image")
         channel_images: List[Image]
         channel_images = [new_image("L", target_image.size) for _ in range(self.get_channel_amount(channel_type))]
@@ -57,8 +57,10 @@ class ImageManager:
                 channel_images[channel_idx]
             )
 
+        return channel_images
+
     @RuntimeCounter("Optimized Image Split")
-    def optimized_image_split_by_channel(self, channel_type: CHANNEL_TYPE_LITERAL):
+    def optimized_image_split_by_channel(self, channel_type: CHANNEL_TYPE_LITERAL) -> List[Image]:
         target_image: Image = getattr(self._image_wrapper, f"{channel_type.lower()}_image")
         channel_images: List[Image]
         channel_images = [new_image("L", target_image.size) for _ in range(self.get_channel_amount(channel_type))]
@@ -89,8 +91,10 @@ class ImageManager:
                 channel_images[channel_idx]
             )
 
+        return channel_images
+
     @RuntimeCounter("Non-Optimzed Image Rotate")
-    def rotate_image(self, rotate_type: ROTATE_TYPE):
+    def rotate_image(self, rotate_type: ROTATE_TYPE) -> Image:
         rotated_image = new_image("RGB", self._loaded_image.size)
         width, height = self._loaded_image.size
         # rotate_range_param = self._create_rotate_range_param(rotate_type = rotate_type)
@@ -103,9 +107,10 @@ class ImageManager:
                 )
 
         self.save_image(f"{rotate_type}_rotated_image.jpg", rotated_image)
+        return rotated_image
 
     @RuntimeCounter("Optimized Image Rotate")
-    def optimized_rotate_image(self, rotate_type: ROTATE_TYPE):
+    def optimized_rotate_image(self, rotate_type: ROTATE_TYPE) -> Image:
         rotated_image = new_image("RGB", self._loaded_image.size)
         width, height = self._loaded_image.size
 
@@ -120,17 +125,21 @@ class ImageManager:
         return rotated_image
 
     @RuntimeCounter("Center Position 50% Crop Image")
-    def crop_image(self):
+    def crop_image(self) -> Image:
         target_data = np.array(self._loaded_image)
         width, height = self._loaded_image.size
         crop_size = int(min(width, height) * 0.25)
 
-        crroped_image_array = target_data[
+        croped_image_array = target_data[
             height // 2 - crop_size: height // 2 + crop_size,
             width // 2 - crop_size: width // 2 + crop_size
         ]
 
-        self.save_image(f"center_position_50%_crop_image.jpg", fromarray(crroped_image_array))
+        croped_image = fromarray(croped_image_array)
+
+        self.save_image(f"center_position_50%_crop_image.jpg", croped_image)
+
+        return croped_image
 
     def get_channel_amount(self, channel_type: CHANNEL_TYPE_LITERAL) -> int:
         return self._channel_amount_data.get(channel_type)
